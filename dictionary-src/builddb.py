@@ -11,7 +11,7 @@ def build_words(c: sqlite3.Cursor):
     c.execute('''DROP TABLE IF EXISTS words''')
     # create the words table
     c.execute('''CREATE TABLE words
-                (es TEXT, en TEXT)''')
+                (es TEXT, en TEXT, ety TEXT)''')
     
     print('opening espedic.txt')
     # open the espdic file
@@ -25,18 +25,12 @@ def build_words(c: sqlite3.Cursor):
         line.replace('"', '\\"')
         es,en = line.strip().split(' : ')
         
-        c.execute('INSERT INTO words VALUES (?,?)', (es, en))
+        c.execute('INSERT INTO words VALUES (?,?, NULL)', (es, en))
     print('done')
 
     espdic.close()
 
 def build_etymology(c: sqlite3.Cursor):
-    print('Creating etymology table')
-
-    c.execute('DROP TABLE IF EXISTS etymology')
-    c.execute('''CREATE TABLE etymology
-            (word TEXT, ety TEXT)''')
-
     print('opening etymology.txt')
     etymology = open('etymology.txt', 'r')
     
@@ -50,10 +44,10 @@ def build_etymology(c: sqlite3.Cursor):
         else:
             word, ety = line.strip().split('=')
 
-        word.strip()
-        ety.strip()
+        word = word.strip()
+        ety = ety.strip()
         
-        c.execute('INSERT INTO etymology VALUES (?,?)', (word, ety))
+        c.execute('UPDATE words SET ety = ? WHERE es = ? COLLATE NOCASE', (ety, word))
     print('done')
 
     etymology.close()

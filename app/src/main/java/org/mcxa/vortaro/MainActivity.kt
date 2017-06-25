@@ -13,15 +13,17 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        setSupportActionBar(toolbar)
-        supportActionBar!!.setDisplayShowTitleEnabled(false)
 
+        // set up the action bar
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        // set up the database
         val p = PreferenceManager.getDefaultSharedPreferences(this)
         if (p.getBoolean("firstRun", true)) {
             copyDB()
             val editor = p.edit()
-            editor.putBoolean("firstRun", false)
-            editor.apply()
+            editor.putBoolean("firstRun", false).apply()
         }
     }
 
@@ -47,7 +49,6 @@ class MainActivity : AppCompatActivity() {
     // open the SQL database, copies
     fun openDB(): SQLiteDatabase? {
         val dbFile = this.getDatabasePath(DB_FILENAME)
-
         return SQLiteDatabase.openDatabase(dbFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
     }
 }
