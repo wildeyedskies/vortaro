@@ -1,14 +1,14 @@
 package org.mcxa.vortaro
 
-import android.database.sqlite.SQLiteDatabase
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.preference.PreferenceManager
+import android.support.v7.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.FileOutputStream
+import java.util.Scanner
+import java.util.zip.GZIPInputStream
 
 class MainActivity : AppCompatActivity() {
-    val DB_FILENAME = "vortaro.db"
+    val DICTIONARY_FILENAME = "vortaro.bin"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,37 +18,28 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        // set up the database
-        val p = PreferenceManager.getDefaultSharedPreferences(this)
-        if (p.getBoolean("firstRun", true)) {
-            copyDB()
-            val editor = p.edit()
-            editor.putBoolean("firstRun", false).apply()
+        // load the wordlist
+        val words = readWords()
+        val wordAapter = WordAdapter(this, words)
+
+        word_view.apply{
+            adapter = wordAapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
         }
     }
 
-    // this function copies the embeded database into the app's data directory
-    // yes, this is incredibly stupid, but android doesn't allow us to directly
-    // access a file embeded directly in the apk
-    fun copyDB() {
-        val dbFile = this.getDatabasePath(DB_FILENAME)
-        val inStream = this.assets.open(DB_FILENAME)
-        val outStream = FileOutputStream(dbFile)
+    fun readWords(): List<Word> {
+        val words = ArrayList<Word>()
 
-        val buffer = ByteArray(4096)
+        val input = Scanner(GZIPInputStream(this.assets.open(DICTIONARY_FILENAME)))
 
-        var len = inStream.read(buffer)
-        while (len != -1) {
-            outStream.write(buffer, 0, len)
-            len = inStream.read(buffer)
+        while (input.hasNextLine()) {
+            val data = input.nextLine().split(':')
+            //parse the data format
+            // es:en:ety
+            words.add(Word(data[0], data[1], data[2]))
         }
-        inStream.close()
-        outStream.close()
-    }
 
-    // open the SQL database, copies
-    fun openDB(): SQLiteDatabase? {
-        val dbFile = this.getDatabasePath(DB_FILENAME)
-        return SQLiteDatabase.openDatabase(dbFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+        return words
     }
 }
