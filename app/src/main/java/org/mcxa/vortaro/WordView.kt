@@ -2,6 +2,7 @@ package org.mcxa.vortaro
 
 import android.content.Context
 import android.support.v7.widget.RecyclerView
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.word_item.view.*
@@ -17,12 +18,17 @@ class WordAdapter(val context: Context, val words: List<Word>) :
         val etymology = itemView.item_etymology
     }
 
-    override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent?.context)
+        val wordView = inflater.inflate(R.layout.word_item, parent, false)
+        return ViewHolder(wordView)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
+        val word = words.get(position)
+
+        holder?.word?.setText(word.es + " : " + word.en)
+        holder?.etymology?.setText(word.ety)
     }
 
     override fun getItemCount(): Int {
