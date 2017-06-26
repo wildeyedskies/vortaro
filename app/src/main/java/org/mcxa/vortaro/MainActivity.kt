@@ -4,6 +4,8 @@ import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
+import android.text.Editable
+import android.text.TextWatcher
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import java.util.zip.GZIPInputStream
@@ -25,30 +27,11 @@ class MainActivity : AppCompatActivity() {
 
         //load the words
         //readWords(baseList, filteredList)
-        val wordAapter = WordAdapter()
+        val wordAdapter = WordAdapter(this)
 
-        val input = Scanner(GZIPInputStream(this@MainActivity.assets.open(DICTIONARY_FILENAME)))
-
-        //TODO run this is the background
-        while (input.hasNextLine()) {
-            val data = input.nextLine().split(':')
-            //parse the data format
-            // es:en:ety
-            val word = Word(data[0], data[1], data[2])
-            wordList.add(word)
-        }
-        wordAapter.words.addAll(wordList)
-
-        word_view.apply{
-            adapter = wordAapter
-            layoutManager = LinearLayoutManager(this@MainActivity)
-        }
-    }
-
-    // load the words into the wordlist in the background
-    /*fun readWords() {
+        // load the words in the background
         object : AsyncTask<Void,Void,Void>() {
-            override fun doInBackground(vararg params: Void?): Void {
+            override fun doInBackground(vararg params: Void?): Void? {
                 val input = Scanner(GZIPInputStream(this@MainActivity.assets.open(DICTIONARY_FILENAME)))
 
                 while (input.hasNextLine()) {
@@ -62,8 +45,50 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPostExecute(result: Void?) {
-
+                wordAdapter.words.addAll(wordList)
             }
         }.execute()
-    }*/
+
+        word_view.apply{
+            adapter = wordAdapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
+
+        search_text.addTextChangedListener(object: TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                // if our filter is becoming more specific we can just filter
+                // the current results
+                if (before < count) {
+                    wordAdapter.words.beginBatchedUpdates()
+                    // iterate through the list back to front and remove all non-matching words
+                    for (i in wordAdapter.words.size() - 1 downTo 0) {
+                        val word = wordAdapter.words.get(i)
+                        // check if our search query exists in english or esperanto, if not, remove
+                        // it
+                        if (!word.en.contains(s.toString()) && !word.es.contains(s.toString()))
+                            wordAdapter.words.removeItemAt(i)
+                    }
+                    wordAdapter.words.endBatchedUpdates()
+                } else {
+                    // in this case we need to filter through the original list
+                    //TODO background this
+                    val filteredList = wordList.filter {
+                        it.en.contains(s.toString()) || it.es.contains(s.toString())
+                    }
+                    wordAdapter.words.beginBatchedUpdates();
+                    //remove items at end, to avoid unnecessary array shifting
+                    while (wordAdapter.words.size() > 0) {
+                        wordAdapter.words.removeItemAt(wordAdapter.words.size() - 1);
+                    }
+                    wordAdapter.words.addAll(filteredList)
+                    wordAdapter.words.endBatchedUpdates();
+
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
 }
