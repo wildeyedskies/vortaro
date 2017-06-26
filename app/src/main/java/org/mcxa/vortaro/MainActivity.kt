@@ -30,22 +30,27 @@ class MainActivity : AppCompatActivity() {
         val wordAdapter = WordAdapter(this)
 
         // load the words in the background
-        object : AsyncTask<Void,Void,Void>() {
+        object : AsyncTask<Void,List<Word>,Void>() {
             override fun doInBackground(vararg params: Void?): Void? {
                 val input = Scanner(GZIPInputStream(this@MainActivity.assets.open(DICTIONARY_FILENAME)))
-
+                var counter = 0; var lastUpdate = 0
                 while (input.hasNextLine()) {
                     val data = input.nextLine().split(':')
                     //parse the data format
                     // es:en:ety
                     val word = Word(data[0], data[1], data[2])
                     wordList.add(word)
+
+                    if (++counter % 20 == 0) {
+                        publishProgress(wordList.subList(lastUpdate, counter - 1))
+                        lastUpdate = counter - 1
+                    }
                 }
                 return null
             }
 
-            override fun onPostExecute(result: Void?) {
-                wordAdapter.words.addAll(wordList)
+            override fun onProgressUpdate(vararg values: List<Word>) {
+                wordAdapter.words.addAll(values[0])
             }
         }.execute()
 
