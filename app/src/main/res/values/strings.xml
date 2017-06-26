@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Vortaro</string>
     <string name="search">Search</string>
+    <string name="definition">%1$s : %2$s</string>
 </resources>

@@ -1,5 +1,6 @@
 package org.mcxa.vortaro
 
+import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.support.v7.util.SortedList
 import android.view.LayoutInflater
@@ -10,7 +11,7 @@ import kotlinx.android.synthetic.main.word_item.view.*
 // model class for a single Word
 data class Word(val es : String, val en : String, val ety : String)
 
-class WordAdapter :
+class WordAdapter(val context: Context) :
         RecyclerView.Adapter<WordAdapter.ViewHolder>() {
 
     val words = SortedList<Word>(Word::class.java, object: SortedList.Callback<Word>() {
@@ -57,7 +58,8 @@ class WordAdapter :
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
         val word = words.get(position)
 
-        holder?.word?.setText(word.es + " : " + word.en)
+        holder?.word?.setText(
+                String.format(context.resources.getString(R.string.definition), word.es, word.en))
         holder?.etymology?.setText(word.ety)
     }
 
