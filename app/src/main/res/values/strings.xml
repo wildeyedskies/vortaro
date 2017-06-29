@@ -1,5 +1,15 @@
 <resources>
-    <string name="app_name">Vortaro</string>
+    <string name="app_name">Senreta Vortaro</string>
     <string name="search">Search</string>
     <string name="definition">%1$s : %2$s</string>
+    <string name="icon">Application Icon</string>
+    <string name="menu_about">About</string>
+    <string name="about_header">About Senreta Vortaro</string>
+    <string name="about_contents">
+        Senreta Vortaro (Offline Dictionary) is an english-esperanto dictionary app inspired by the
+        web page Tuja Vortaro.\n\n
+
+        This app is open source under the Apache2 License and the data sources are freely available
+        under Creative Commons licenses.
+    </string>
 </resources>

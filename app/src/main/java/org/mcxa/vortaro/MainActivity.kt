@@ -1,16 +1,18 @@
 package org.mcxa.vortaro
 
+import android.content.Intent
 import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import java.util.zip.GZIPInputStream
 import kotlin.collections.ArrayList
-import kotlin.collections.MutableList
 
 class MainActivity : AppCompatActivity() {
     val DICTIONARY_FILENAME = "vortaro.bin"
@@ -30,27 +32,17 @@ class MainActivity : AppCompatActivity() {
         val wordAdapter = WordAdapter(this)
 
         // load the words in the background
-        object : AsyncTask<Void,List<Word>,Void>() {
+        object : AsyncTask<Void,Void,Void>() {
             override fun doInBackground(vararg params: Void?): Void? {
                 val input = Scanner(GZIPInputStream(this@MainActivity.assets.open(DICTIONARY_FILENAME)))
-                var counter = 0; var lastUpdate = 0
                 while (input.hasNextLine()) {
                     val data = input.nextLine().split(':')
                     //parse the data format
                     // es:en:ety
                     val word = Word(data[0], data[1], data[2])
                     wordList.add(word)
-
-                    if (++counter % 20 == 0) {
-                        publishProgress(wordList.subList(lastUpdate, counter - 1))
-                        lastUpdate = counter - 1
-                    }
                 }
                 return null
-            }
-
-            override fun onProgressUpdate(vararg values: List<Word>) {
-                wordAdapter.words.addAll(values[0])
             }
         }.execute()
 
@@ -95,5 +87,22 @@ class MainActivity : AppCompatActivity() {
 
             override fun afterTextChanged(s: Editable?) {}
         })
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.option_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when (item?.itemId) {
+            R.id.about -> {
+                val i = Intent(this, AboutActivity::class.java)
+                startActivity(i) // brings up the second activity
+                return true
+            }
+        }
+
+        return false
     }
 }
