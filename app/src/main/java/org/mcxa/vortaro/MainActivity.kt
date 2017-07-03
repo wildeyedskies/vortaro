@@ -14,7 +14,83 @@ import java.util.*
 import java.util.zip.GZIPInputStream
 import kotlin.collections.ArrayList
 
-data class Definition(val es: String, val en: String)
+// data model for a espdic definition
+data class EspdicModel(val es: String, val en: Array<EspdicEn>)
+
+enum class Elaboration {
+    BEFORE, AFTER, NONE
+}
+
+// data class that represents an english definition in ESPDIC, most entries have many of these
+data class EspdicEn(val word: String, val elaboration: String?, val eltype: Elaboration) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is EspdicEn) return false
+        else return this.word == other.word && this.elaboration == other.elaboration
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode()
+    }
+}
+
+// makes it easy to say espdicModel.en.toString() and get a nice rendered output
+fun Array<EspdicEn>.display(): String {
+    var string = ""
+    this.forEach{
+        if (!string.isEmpty()) string += ", "
+
+        if (it.eltype == Elaboration.AFTER) {
+            string += it.word
+            if (it.elaboration != null) string += " (" + it.elaboration + ')'
+        } else if (it.eltype == Elaboration.BEFORE) {
+            if (it.elaboration != null) string += '(' + it.elaboration + ") "
+            string += it.word
+        } else {
+            string += it.word
+        }
+    }
+    return string
+}
+
+// quick way to determine if there is an exact english match to an english word
+fun Array<EspdicEn>.matches(query: String): Boolean {
+    this.forEach {
+        if (it.word == query) return true
+        if (it.word == "to " + query) return true
+    }
+    return false
+}
+
+// I cannot figure out how to make a constructor that processes data
+// and builds an object
+fun buildEspdicModel(espdicLine: String): EspdicModel {
+    val data = espdicLine.split(":")
+
+    // this is the english definition, it may be multiple terms seperated by ,
+    val enData = data[1].split(", ")
+    // we can build an array of these english terms
+    val en = Array<EspdicEn>(enData.size, { i ->
+        // whether the elaboration comes before the word
+        val eltype = if (enData[i].startsWith('(')) Elaboration.BEFORE
+        else if (enData[i].endsWith(')')) Elaboration.AFTER
+        else Elaboration.NONE
+
+        // grab the part of the string in the parens
+        val elaboration = if (eltype != Elaboration.NONE)
+            enData[i].substringAfter('(').substringBefore(')')
+        else null
+
+        val word = if (eltype == Elaboration.BEFORE)
+            enData[i].substring(0, enData[i].indexOf('(')).trim()
+        else if (eltype == Elaboration.AFTER)
+            enData[i].substring(enData[i].indexOf(')') + 1, enData[i].length)
+        else enData[i]
+
+        EspdicEn(word, elaboration, eltype)
+    })
+
+    return EspdicModel(data[0], en)
+}
 
 class MainActivity : AppCompatActivity() {
     // tag for log methods
@@ -23,9 +99,46 @@ class MainActivity : AppCompatActivity() {
     val ETYMOLOGY_FILENAME = "etymology.bin"
     val TRANSITIVE_FILENAME = "transitiveco.bin"
 
-    val dictionary = ArrayList<Definition>()
+    val dictionary = ArrayList<EspdicModel>()
     val etymology = HashMap<String, String>()
     val transitive = HashMap<String, Boolean>()
+
+    // parse and load the dictionary files
+    fun parseFiles() {
+        Log.d(TAG, "Parsing espdic")
+        val espdicScanner = Scanner(GZIPInputStream(this.assets.open(ESPDIC_FILENAME)))
+        while (espdicScanner.hasNextLine()) {
+            val data = espdicScanner.nextLine()
+            //parse the data format
+            // es:en,en (elaboration)
+            val definition = buildEspdicModel(data)
+            dictionary.add(definition)
+        }
+        espdicScanner.close()
+        Log.d(TAG, "parsing complete")
+
+        Log.d(TAG, "Parsing etymology")
+        val etymologyScanner = Scanner(GZIPInputStream(this.assets.open(ETYMOLOGY_FILENAME)))
+        while (etymologyScanner.hasNextLine()) {
+            val data = etymologyScanner.nextLine().split(':')
+            //parse the data format
+            // word:ety
+            etymology.put(data[0], data[1])
+        }
+        etymologyScanner.close()
+        Log.d(TAG, "parsing complete")
+
+        Log.d(TAG, "Parsing transitiveco")
+        val transScanner = Scanner(GZIPInputStream(this.assets.open(TRANSITIVE_FILENAME)))
+        while (transScanner.hasNextLine()) {
+            val data = transScanner.nextLine().split(':')
+            //parse the data format
+            // verb:transitive (t/f)
+            transitive.put(data[0], data[1] == "t")
+        }
+        transScanner.close()
+        Log.d(TAG, "parsing complete")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,58 +169,25 @@ class MainActivity : AppCompatActivity() {
                     wordAdapter.words.removeItemAt(wordAdapter.words.size() - 1);
                 }
 
-                // iterate through dictionary and search for matches
-                val normalizedTerm = s.toString().xReplace().normalizeES()
-                Log.d(TAG, "begining search for " + s)
-                for (def in dictionary) {
-                    if (def.es == normalizedTerm) {
-                        val ety = etymology.get(def.es.normalizeES())
-                        wordAdapter.words.add(Word(def.es, def.en, if(ety != null) ety else ""))
+                // don't search for anything if we have just the empty string
+                if (s!!.isNotEmpty()) {
+                    // iterate through dictionary and search for matches
+                    val normalizedTerm = s.toString().xReplace().normalizeES()
+                    val exactTerm = s.toString()
+                    Log.d(TAG, "begining search for " + s)
+                    for (def in dictionary) {
+                        if (def.es == normalizedTerm || def.en.matches(exactTerm)) {
+                            val ety = etymology.get(def.es.normalizeES())
+                            wordAdapter.words.add(WordModel(def.es, def.en.display(), if (ety != null) ety else ""))
+                        }
                     }
+                    wordAdapter.words.endBatchedUpdates();
+                    Log.d(TAG, "search complete")
                 }
-                wordAdapter.words.endBatchedUpdates();
-                Log.d(TAG, "search complete")
             }
 
             override fun afterTextChanged(s: Editable?) {}
         })
-    }
-
-    // parse the dictionary files
-    fun parseFiles() {
-        Log.d(TAG, "Parsing espdic")
-        val espdicScanner = Scanner(GZIPInputStream(this.assets.open(ESPDIC_FILENAME)))
-        while (espdicScanner.hasNextLine()) {
-            val data = espdicScanner.nextLine().split(':')
-            //parse the data format
-            // es:en
-            val definition = Definition(data[0], data[1])
-            dictionary.add(definition)
-        }
-        espdicScanner.close()
-        Log.d(TAG, "parsing complete")
-
-        Log.d(TAG, "Parsing etymology")
-        val etymologyScanner = Scanner(GZIPInputStream(this.assets.open(ETYMOLOGY_FILENAME)))
-        while (etymologyScanner.hasNextLine()) {
-            val data = etymologyScanner.nextLine().split(':')
-            //parse the data format
-            // word:ety
-            etymology.put(data[0], data[1])
-        }
-        etymologyScanner.close()
-        Log.d(TAG, "parsing complete")
-
-        Log.d(TAG, "Parsing transitiveco")
-        val transScanner = Scanner(GZIPInputStream(this.assets.open(TRANSITIVE_FILENAME)))
-        while (transScanner.hasNextLine()) {
-            val data = transScanner.nextLine().split(':')
-            //parse the data format
-            // verb:transitive (t/f)
-            transitive.put(data[0], data[1] == "t")
-        }
-        transScanner.close()
-        Log.d(TAG, "parsing complete")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

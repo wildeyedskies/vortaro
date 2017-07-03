@@ -8,22 +8,22 @@ import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.word_item.view.*
 
-// model class for a single Word
-data class Word(val es : String, val en : String, val ety : String)
+// model class for a single WordModel
+data class WordModel(val es : String, val en : String, val ety : String)
 
 class WordAdapter(val context: Context) :
         RecyclerView.Adapter<WordAdapter.ViewHolder>() {
 
-    val words = SortedList<Word>(Word::class.java, object: SortedList.Callback<Word>() {
-        override fun areContentsTheSame(oldItem: Word?, newItem: Word?): Boolean {
+    val words = SortedList<WordModel>(WordModel::class.java, object: SortedList.Callback<WordModel>() {
+        override fun areContentsTheSame(oldItem: WordModel?, newItem: WordModel?): Boolean {
             return oldItem == newItem
         }
 
-        override fun areItemsTheSame(item1: Word?, item2: Word?): Boolean {
+        override fun areItemsTheSame(item1: WordModel?, item2: WordModel?): Boolean {
             return item1 == item2
         }
 
-        override fun compare(o1: Word?, o2: Word?): Int {
+        override fun compare(o1: WordModel?, o2: WordModel?): Int {
             return o1!!.es.compareTo(o2!!.es)
         }
 
