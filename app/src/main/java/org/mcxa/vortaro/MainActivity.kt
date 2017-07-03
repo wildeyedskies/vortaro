@@ -71,22 +71,25 @@ fun buildEspdicModel(espdicLine: String): EspdicModel {
     // we can build an array of these english terms
     val en = Array<EspdicEn>(enData.size, { i ->
         // whether the elaboration comes before the word
-        val eltype = if (enData[i].startsWith('(')) Elaboration.BEFORE
-        else if (enData[i].endsWith(')')) Elaboration.AFTER
-        else Elaboration.NONE
+        if (enData[i].startsWith('(')) {
+            val eltype = Elaboration.BEFORE
+            val elaboration = enData[i].substringAfter('(').substringBefore(')')
+            val word = enData[i].substringAfter(')').trim()
 
-        // grab the part of the string in the parens
-        val elaboration = if (eltype != Elaboration.NONE)
-            enData[i].substringAfter('(').substringBefore(')')
-        else null
+            EspdicEn(word, elaboration, eltype)
+        } else if (enData[i].endsWith(')')) {
+            val eltype = Elaboration.AFTER
+            val elaboration = enData[i].substringAfter('(').substringBefore(')')
+            val word = enData[i].substringBefore('(').trim()
 
-        val word = if (eltype == Elaboration.BEFORE)
-            enData[i].substring(0, enData[i].indexOf('(')).trim()
-        else if (eltype == Elaboration.AFTER)
-            enData[i].substring(enData[i].indexOf(')') + 1, enData[i].length)
-        else enData[i]
+            EspdicEn(word, elaboration, eltype)
+        } else {
+            val eltype = Elaboration.NONE
+            val elaboration = null
+            val word = enData[i]
 
-        EspdicEn(word, elaboration, eltype)
+            EspdicEn(word, elaboration, eltype)
+        }
     })
 
     return EspdicModel(data[0], en)
@@ -164,6 +167,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 wordAdapter.words.beginBatchedUpdates();
+
                 // remove items at end, to avoid unnecessary array shifting
                 while (wordAdapter.words.size() > 0) {
                     wordAdapter.words.removeItemAt(wordAdapter.words.size() - 1);
@@ -178,12 +182,20 @@ class MainActivity : AppCompatActivity() {
                     for (def in dictionary) {
                         if (def.es == normalizedTerm || def.en.matches(exactTerm)) {
                             val ety = etymology.get(def.es.normalizeES())
-                            wordAdapter.words.add(WordModel(def.es, def.en.display(), if (ety != null) ety else ""))
+
+                            //check for transitive
+                            val tr = if (def.es.endsWith('i') && transitive.containsKey(def.es)) {
+                                if (transitive.get(def.es)!!) " (tr)"
+                                else " (itr)"
+                            } else ""
+
+                            wordAdapter.words.add(WordModel(def.es + tr, def.en.display(), if (ety != null) ety else ""))
                         }
                     }
-                    wordAdapter.words.endBatchedUpdates();
                     Log.d(TAG, "search complete")
                 }
+
+                wordAdapter.words.endBatchedUpdates();
             }
 
             override fun afterTextChanged(s: Editable?) {}
