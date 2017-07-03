@@ -1,6 +1,7 @@
 package org.mcxa.vortaro
 
 import android.content.Intent
+import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
@@ -105,42 +106,74 @@ class MainActivity : AppCompatActivity() {
     val dictionary = ArrayList<EspdicModel>()
     val etymology = HashMap<String, String>()
     val transitive = HashMap<String, Boolean>()
+    // do not search unless 0
+    var parsingLock = 3
 
     // parse and load the dictionary files
     fun parseFiles() {
-        Log.d(TAG, "Parsing espdic")
-        val espdicScanner = Scanner(GZIPInputStream(this.assets.open(ESPDIC_FILENAME)))
-        while (espdicScanner.hasNextLine()) {
-            val data = espdicScanner.nextLine()
-            //parse the data format
-            // es:en,en (elaboration)
-            val definition = buildEspdicModel(data)
-            dictionary.add(definition)
-        }
-        espdicScanner.close()
-        Log.d(TAG, "parsing complete")
+        object: AsyncTask<Void,Void,Void>() {
+            override fun doInBackground(vararg params: Void?): Void? {
+                Log.d(TAG, "Parsing espdic")
+                val espdicScanner = Scanner(GZIPInputStream(this@MainActivity.assets.open(ESPDIC_FILENAME)))
+                while (espdicScanner.hasNextLine()) {
+                    val data = espdicScanner.nextLine()
+                    //parse the data format
+                    // es:en,en (elaboration)
+                    val definition = buildEspdicModel(data)
+                    dictionary.add(definition)
+                }
+                espdicScanner.close()
+                Log.d(TAG, "parsing complete")
 
-        Log.d(TAG, "Parsing etymology")
-        val etymologyScanner = Scanner(GZIPInputStream(this.assets.open(ETYMOLOGY_FILENAME)))
-        while (etymologyScanner.hasNextLine()) {
-            val data = etymologyScanner.nextLine().split(':')
-            //parse the data format
-            // word:ety
-            etymology.put(data[0], data[1])
-        }
-        etymologyScanner.close()
-        Log.d(TAG, "parsing complete")
+                return null
+            }
 
-        Log.d(TAG, "Parsing transitiveco")
-        val transScanner = Scanner(GZIPInputStream(this.assets.open(TRANSITIVE_FILENAME)))
-        while (transScanner.hasNextLine()) {
-            val data = transScanner.nextLine().split(':')
-            //parse the data format
-            // verb:transitive (t/f)
-            transitive.put(data[0], data[1] == "t")
-        }
-        transScanner.close()
-        Log.d(TAG, "parsing complete")
+            override fun onPostExecute(result: Void?) {
+                if(--parsingLock == 0) executeSearch(search_text.text)
+            }
+        }.execute()
+
+        object: AsyncTask<Void,Void,Void>() {
+            override fun doInBackground(vararg params: Void?): Void? {
+                Log.d(TAG, "Parsing etymology")
+                val etymologyScanner = Scanner(GZIPInputStream(this@MainActivity.assets.open(ETYMOLOGY_FILENAME)))
+                while (etymologyScanner.hasNextLine()) {
+                    val data = etymologyScanner.nextLine().split(':')
+                    //parse the data format
+                    // word:ety
+                    etymology.put(data[0], data[1])
+                }
+                etymologyScanner.close()
+                Log.d(TAG, "parsing complete")
+
+                return null
+            }
+
+            override fun onPostExecute(result: Void?) {
+                if(--parsingLock == 0) executeSearch(search_text.text)
+            }
+        }.execute()
+
+        object: AsyncTask<Void,Void,Void>() {
+            override fun doInBackground(vararg params: Void?): Void? {
+                Log.d(TAG, "Parsing transitiveco")
+                val transScanner = Scanner(GZIPInputStream(this@MainActivity.assets.open(TRANSITIVE_FILENAME)))
+                while (transScanner.hasNextLine()) {
+                    val data = transScanner.nextLine().split(':')
+                    //parse the data format
+                    // verb:transitive (t/f)
+                    transitive.put(data[0], data[1] == "t")
+                }
+                transScanner.close()
+                Log.d(TAG, "parsing complete")
+
+                return null
+            }
+
+            override fun onPostExecute(result: Void?) {
+                if(--parsingLock == 0) executeSearch(search_text.text)
+            }
+        }.execute()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -151,10 +184,9 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        //load the words
-        //readWords(baseList, filteredList)
         val wordAdapter = WordAdapter(this)
 
+        // load the word files
         parseFiles()
 
         word_view.apply{
@@ -166,40 +198,49 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                wordAdapter.words.beginBatchedUpdates();
-
-                // remove items at end, to avoid unnecessary array shifting
-                while (wordAdapter.words.size() > 0) {
-                    wordAdapter.words.removeItemAt(wordAdapter.words.size() - 1);
-                }
-
-                // don't search for anything if we have just the empty string
-                if (s!!.isNotEmpty()) {
-                    // iterate through dictionary and search for matches
-                    val normalizedTerm = s.toString().xReplace().normalizeES()
-                    val exactTerm = s.toString()
-                    Log.d(TAG, "begining search for " + s)
-                    for (def in dictionary) {
-                        if (def.es == normalizedTerm || def.en.matches(exactTerm)) {
-                            val ety = etymology.get(def.es.normalizeES())
-
-                            //check for transitive
-                            val tr = if (def.es.endsWith('i') && transitive.containsKey(def.es)) {
-                                if (transitive.get(def.es)!!) " (tr)"
-                                else " (itr)"
-                            } else ""
-
-                            wordAdapter.words.add(WordModel(def.es + tr, def.en.display(), if (ety != null) ety else ""))
-                        }
-                    }
-                    Log.d(TAG, "search complete")
-                }
-
-                wordAdapter.words.endBatchedUpdates();
+                // do not search if parsing is complete
+                if (parsingLock > 0) return
+                executeSearch(s)
             }
 
             override fun afterTextChanged(s: Editable?) {}
         })
+    }
+
+    fun executeSearch(s: CharSequence?) {
+        val wordAdapter = word_view.adapter as WordAdapter
+
+        wordAdapter.words.beginBatchedUpdates();
+
+        // remove items at end, to avoid unnecessary array shifting
+        while (wordAdapter.words.size() > 0) {
+            wordAdapter.words.removeItemAt(wordAdapter.words.size() - 1);
+        }
+
+        // don't search for anything if we have just the empty string
+        if (s!!.isNotEmpty()) {
+            // iterate through dictionary and search for matches
+            val normalizedTerm = s.toString().xReplace().normalizeES()
+            val exactTerm = s.toString()
+            Log.d(TAG, "begining search for " + s)
+            for (def in dictionary) {
+                if (def.es == normalizedTerm || def.en.matches(exactTerm)) {
+                    val ety = etymology.get(def.es.normalizeES())
+
+                    //check for transitive
+                    val tr = if (def.es.endsWith('i') && transitive.containsKey(def.es)) {
+                        if (transitive.get(def.es)!!) " (tr)"
+                        else " (itr)"
+                    } else ""
+
+                    wordAdapter.words.add(WordModel(def.es + tr, def.en.display(), if (ety != null) ety else ""))
+                }
+            }
+            Log.d(TAG, "search complete")
+        }
+
+        wordAdapter.words.endBatchedUpdates();
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
