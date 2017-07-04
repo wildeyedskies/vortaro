@@ -10,6 +10,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import java.util.zip.GZIPInputStream
@@ -107,6 +108,7 @@ class MainActivity : AppCompatActivity() {
     val etymology = HashMap<String, String>()
     val transitive = HashMap<String, Boolean>()
     // do not search unless 0
+    // note that primitives are thread safe in the JVM
     var parsingLock = 3
 
     // parse and load the dictionary files
@@ -129,7 +131,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPostExecute(result: Void?) {
-                if(--parsingLock == 0) executeSearch(search_text.text)
+                if(--parsingLock == 0) {
+                    executeSearch(search_text.text)
+                    loading_spinner.visibility = View.GONE
+                }
             }
         }.execute()
 
@@ -150,8 +155,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPostExecute(result: Void?) {
-                if(--parsingLock == 0) executeSearch(search_text.text)
-            }
+                if(--parsingLock == 0) {
+                    executeSearch(search_text.text)
+                    loading_spinner.visibility = View.GONE
+                }            }
         }.execute()
 
         object: AsyncTask<Void,Void,Void>() {
@@ -171,8 +178,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPostExecute(result: Void?) {
-                if(--parsingLock == 0) executeSearch(search_text.text)
-            }
+                if(--parsingLock == 0) {
+                    executeSearch(search_text.text)
+                    loading_spinner.visibility = View.GONE
+                }            }
         }.execute()
     }
 
@@ -199,7 +208,10 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 // do not search if parsing is complete
-                if (parsingLock > 0) return
+                if (parsingLock > 0) {
+                    loading_spinner.visibility = View.VISIBLE
+                    return
+                }
                 executeSearch(s)
             }
 
