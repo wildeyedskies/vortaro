@@ -7,7 +7,7 @@
     <string name="about_header">About Senreta Vortaro</string>
     <string name="about_contents">
         Senreta Vortaro (Offline Dictionary) is an english-esperanto dictionary app inspired by the
-        web page Tuja Vortaro.\n\n
+        web page Tuja Vortaro. It is designed to be easy to use for beginners.\n\n
         This app is open source under the Apache2 License and the data sources are freely available
         under Creative Commons licenses.
     </string>
