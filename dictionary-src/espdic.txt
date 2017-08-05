@@ -44307,7 +44307,7 @@ pendeti : to dangle
 pendglacio : icicle
 pendglisilo : hang glider
 pendi : to droop, hang
-pendi, sveni : to hang, be suspended)
+pendi, sveni : to hang, be suspended
 pendigado : hanging (as in, hanging things up)
 pendigi : to hang, suspend
 pendigilo : gallows
