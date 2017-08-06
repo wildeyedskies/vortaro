@@ -7,9 +7,43 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.word_item.view.*
+import java.util.*
 
 // model class for a single WordModel
-data class WordModel(val es : String, val en : String, val ety : String)
+data class WordModel(val es : String, val en : LinkedList<EnModel>, val ety : String,
+                     val trans: Boolean?) {
+    fun displayDef(): String {
+        // format es into esf
+        val esf = when(trans) {
+            true -> "$es (tr)"
+            false -> "$es (ntr)"
+            null -> es
+        }
+
+        // format en into enf
+        var enf = ""
+        en.forEach { element ->
+            if (enf.isNotEmpty()) enf += ", "
+            enf += element.toString()
+        }
+
+        return "$esf : $enf"
+    }
+}
+
+data class EnModel(val word: String, val elaboration: String?, val elbefore: Boolean?) {
+    override fun toString(): String {
+        // handle the special case where we only have an elaboration
+        if (word.isEmpty() && elaboration != null) return "($elaboration)"
+        if (elaboration.isNullOrEmpty()) return word
+
+        when(elbefore) {
+            null -> return word
+            true -> return "($elaboration) $word"
+            false -> return "$word ($elaboration)"
+        }
+    }
+}
 
 class WordAdapter(val context: Context) :
         RecyclerView.Adapter<WordAdapter.ViewHolder>() {
@@ -58,8 +92,7 @@ class WordAdapter(val context: Context) :
     override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
         val word = words.get(position)
 
-        holder?.word?.setText(
-                String.format(context.resources.getString(R.string.definition), word.es, word.en))
+        holder?.word?.setText(word.displayDef())
         holder?.etymology?.setText(word.ety)
     }
 

@@ -63,23 +63,15 @@ def build_espdic(conn):
             for enword in enlist:
                 # break apart the elaboration
                 if enword.startswith('(') and enword != '()':
-                    elbefore = 1
-                    try:
-                        el = re.findall('\((.*?)\)', enword)[0]
-                    except IndexError:
-                        print('en {}\nenword: {}'.format(en, enword))
-                        sys.exit(1)
+                    elbefore = 2
+                    el = re.findall('\((.*?)\)', enword)[0]
                     enword = enword.split(')')[1].strip()
                 elif enword.endswith(')') and enword != '()':
-                    elbefore = 0
-                    try:
-                        el = re.findall('\((.*?)\)', enword)[0]
-                    except IndexError:
-                        print('en {}\nenword: {}'.format(en, enword))
-                        sys.exit(1)
+                    elbefore = 1
+                    el = re.findall('\((.*?)\)', enword)[0]
                     enword = enword.split('(')[0].strip()
                 else:
-                    elbefore = None
+                    elbefore = 0
                     el = None
 
                 c.execute('''insert into en values (?,?,?,?)''', (esrow, enword, el, elbefore))
@@ -100,7 +92,7 @@ def build_transitive(conn):
        verb, trans = line.strip().split(' ')
        
        c.execute('''insert into trans
-       values (?, ?)''', (verb, 1 if trans == 't' else 0))
+       values (?, ?)''', (verb, 2 if trans == 't' else 1))
 
    transitive_in.close()
    conn.commit()
@@ -122,14 +114,14 @@ def create_tables(conn):
    (verb text primary key, trans integer) without rowid''')
    # Esperanto words
    c.execute('''create table es
-   (word text)''')
+   (esword text)''')
    # English words
    # Note that esindx refers to the rowid in the Esperanto table
    # el is the elaboration that may be before or after a word, denoted by elbefore
    c.execute('''create table en
-   (esrow integer, word text, el text, elbefore integer)''')
+   (esrow integer, enword text, el text, elbefore integer)''')
    # we index the english words because we also want to search on them
-   c.execute('''create index enword on en (word)''')
+   c.execute('''create index enword on en (enword)''')
    c.execute('''create index esrow on en (esrow)''')
    
    # commit and close our transaction
