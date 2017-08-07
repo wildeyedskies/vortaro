@@ -6,9 +6,18 @@
     <string name="menu_about">About</string>
     <string name="about_header">About Senreta Vortaro</string>
     <string name="about_contents">
-        Senreta Vortaro (Offline Dictionary) is an english-esperanto dictionary app inspired by the
+        En: Senreta Vortaro (offline dictionary) is an English-Esperanto dictionary app inspired by the
         web page Tuja Vortaro. It is designed to be easy to use for beginners.\n\n
-        This app is open source under the Apache2 License and the data sources are freely available
-        under Creative Commons licenses.
+
+        Senreta Vortaro was created by Ian Mcxa. The source code is available on
+        <a href="https://github.com/ianmcxa/vortaro">Github</a> under the Apache2 License. The dictionary
+        data is licenced under Creative Commons.\n\n
+
+        Eo: Senreta Vortaro estas angla-Esperanta vortara aplikaĵo. La dinamika retpaĝo, Tuja Vortaro,
+        inspiris ĝin. Senreta Vortaro estas kreita por esti facile uzata de komencantoj.\n\n
+
+        Senreta Vortaro estas verko de Ian Mcxa. La fontkodo estas havebla ĉe
+        <a href="https://github.com/ianmcxa/vortaro">Github</a> per la Apache2 permesilo. La vortaraj
+        dataoj estas permesitaj per Creative Commons.
     </string>
 </resources>
