@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -37,9 +38,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 if (!s.isNullOrEmpty()) {
-                    loading_spinner.visibility = View.VISIBLE
                     dbHelper?.search(s.toString(), word_view.adapter as WordAdapter)
-                    loading_spinner.visibility = View.GONE
                 }
             }
 
