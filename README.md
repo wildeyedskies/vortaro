@@ -18,6 +18,6 @@ I would like to add more sources to the app in the future, that would require so
 ## App Architecture
 Senreta Vortaro is written in the Kotlin language for Android.
 
-Currently the app loads the espdic, etymology and transitiveco files into memory. Espdic is stored as an arraylist and etymology and transitiveco are stored as hashmaps. This can take several seconds, especially on older devices. I'm not sure of an easier way to do this.
+Currently the app loads the espdic, etymology and transitiveco data from an SQLite database that is copied into the data folder when the app is first launched. Both English and Esperanto words are indexed in the database file, and searching is performed in a background thread. The current setup should be fairly performant.
 
 The app displays output in a RecyclerView. Currently only exact matches to the english and esperanto words are included. Inexact matches will need to be added later, but they need to be sorted after exact matches.
