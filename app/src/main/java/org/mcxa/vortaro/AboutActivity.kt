@@ -2,6 +2,7 @@ package org.mcxa.vortaro
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.text.method.LinkMovementMethod
 import android.view.MenuItem
 import kotlinx.android.synthetic.main.activity_about.*
 
@@ -19,6 +20,7 @@ class AboutActivity : AppCompatActivity() {
             supportActionBar?.setDisplayShowHomeEnabled(true)
         }
 
+        about_content.movementMethod = LinkMovementMethod.getInstance()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

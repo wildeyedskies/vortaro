@@ -72,38 +72,38 @@ class DatabaseHelper(private val context: Context) :
         object: AsyncTask<Void,Void,HashMap<Int, WordModel>>() {
             override fun doInBackground(vararg p0: Void?): HashMap<Int, WordModel> {
                 val wordmap = HashMap<Int, WordModel>()
-                db.rawQuery("SELECT * FROM es " +
-                        "INNER JOIN en ON es.rowid=en.esrow " +
-                        "LEFT JOIN trans ON es.esword=trans.verb " +
-                        "LEFT JOIN ety ON es.esword=ety.word " +
-                        "WHERE es.esword=? OR es.esword=? OR es.rowid IN " +
-                        "(SELECT es.rowid FROM es INNER JOIN en ON es.rowid=en.esrow WHERE en.enword=? OR en.enword=?)",
+                db.rawQuery("SELECT * FROM eo " +
+                        "INNER JOIN en ON eo.rowid=en.eorow " +
+                        "LEFT JOIN trans ON eo.eoword=trans.verb " +
+                        "LEFT JOIN ety ON eo.eoword=ety.word " +
+                        "WHERE eo.eoword=? OR eo.eoword=? OR eo.rowid IN " +
+                        "(SELECT eo.rowid FROM eo INNER JOIN en ON eo.rowid=en.eorow WHERE en.enword=? OR en.enword=?)",
                         arrayOf(exactTerm, normalizedTerm, exactTerm, "to " + exactTerm)
                 ).use { cursor ->
 
                     while (cursor.moveToNext()) {
-                        val esrow = cursor.getInt(cursor.getColumnIndexOrThrow("esrow"))
+                        val eorow = cursor.getInt(cursor.getColumnIndexOrThrow("eorow"))
                         // if the wordmap already has the Esperanto word, then just add the english def
-                        if (wordmap.containsKey(esrow)) {
+                        if (wordmap.containsKey(eorow)) {
                             // grab the english values
                             val word = cursor.getString(cursor.getColumnIndexOrThrow("enword"))
                             val elaboration = cursor.getString(cursor.getColumnIndexOrThrow("el"))
                             val elbefore = cursor.getInt(cursor.getColumnIndexOrThrow("elbefore"))
 
-                            wordmap.get(esrow)?.en?.add(EnModel(word, elaboration, when(elbefore) {
+                            wordmap.get(eorow)?.en?.add(EnModel(word, elaboration, when(elbefore) {
                                 0 -> false
                                 1 -> true
                                 else -> null
                             }))
                             // add a new word model and english definition
                         } else {
-                            val esword = cursor.getString(cursor.getColumnIndexOrThrow("esword"))
+                            val eoword = cursor.getString(cursor.getColumnIndexOrThrow("eoword"))
                             val enword = cursor.getString(cursor.getColumnIndexOrThrow("enword"))
                             val elaboration = cursor.getString(cursor.getColumnIndexOrThrow("el"))
                             val elbefore = cursor.getInt(cursor.getColumnIndexOrThrow("elbefore"))
                             val etymology = cursor.getString(cursor.getColumnIndexOrThrow("ety"))
                             val trans = cursor.getInt(cursor.getColumnIndexOrThrow("trans"))
-                            Log.d(TAG, "found $esword, $enword, $elaboration, $elbefore, $etymology, $trans")
+                            Log.d(TAG, "found $eoword, $enword, $elaboration, $elbefore, $etymology, $trans")
 
                             val enmodels = LinkedList<EnModel>()
                             enmodels.add(EnModel(enword, elaboration, when(elbefore) {
@@ -112,7 +112,7 @@ class DatabaseHelper(private val context: Context) :
                                 else -> null
                             }))
 
-                            wordmap.put(esrow, WordModel(esword, enmodels, etymology ?: "",when(trans) {
+                            wordmap.put(eorow, WordModel(eoword, enmodels, etymology ?: "",when(trans) {
                                 2 -> true
                                 1 -> false
                                 else -> null

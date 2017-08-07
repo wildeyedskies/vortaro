@@ -37,8 +37,16 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val w = word_view.adapter as WordAdapter
                 if (!s.isNullOrEmpty()) {
-                    dbHelper?.search(s.toString(), word_view.adapter as WordAdapter)
+                    dbHelper?.search(s.toString(), w)
+                } else {
+                    w.words.beginBatchedUpdates();
+                    // remove items at end, to avoid unnecessary array shifting
+                    while (w.words.size() > 0) {
+                        w.words.removeItemAt(w.words.size() - 1);
+                    }
+                    w.words.endBatchedUpdates()
                 }
             }
 

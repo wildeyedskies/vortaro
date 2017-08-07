@@ -47,16 +47,16 @@ def build_espdic(conn):
     print('parsing espdic...')
     # now let's parse the file into the database
     for line in espdic_in:
-        es, en = line.strip().split(' : ')
+        eo, en = line.strip().split(' : ')
 
         # insert the Esperanto word
-        c.execute('''insert into es values (?)''', (es,))
-        esrow = c.lastrowid
+        c.execute('''insert into eo values (?)''', (eo,))
+        eorow = c.lastrowid
         
         # some entries have es : (description in English)
         # this case needs to be handled specially
         if (en.startswith('(') and en.endswith(')')):
-            c.execute('''insert into en values (?,?,?,?)''', (esrow, '', en, 0))
+            c.execute('''insert into en values (?,?,?,?)''', (eorow, '', en, 0))
         else:
             # regex taken from https://stackoverflow.com/questions/26633452/how-to-split-by-commas-that-are-not-within-parentheses
             enlist = re.split(r',\s*(?![^()]*\))', en)
@@ -74,7 +74,7 @@ def build_espdic(conn):
                     elbefore = 0
                     el = None
 
-                c.execute('''insert into en values (?,?,?,?)''', (esrow, enword, el, elbefore))
+                c.execute('''insert into en values (?,?,?,?)''', (eorow, enword, el, elbefore))
         
     espdic_in.close()
     conn.commit()
@@ -113,16 +113,16 @@ def create_tables(conn):
    c.execute('''create table trans
    (verb text primary key, trans integer) without rowid''')
    # Esperanto words
-   c.execute('''create table es
-   (esword text)''')
+   c.execute('''create table eo
+   (eoword text)''')
    # English words
    # Note that esindx refers to the rowid in the Esperanto table
    # el is the elaboration that may be before or after a word, denoted by elbefore
    c.execute('''create table en
-   (esrow integer, enword text, el text, elbefore integer)''')
+   (eorow integer, enword text, el text, elbefore integer)''')
    # we index the english words because we also want to search on them
    c.execute('''create index enword on en (enword)''')
-   c.execute('''create index esrow on en (esrow)''')
+   c.execute('''create index eorow on en (eorow)''')
    
    # commit and close our transaction
    conn.commit()
