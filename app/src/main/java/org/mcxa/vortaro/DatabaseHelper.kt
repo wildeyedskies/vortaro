@@ -3,10 +3,12 @@ package org.mcxa.vortaro
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.os.AsyncTask
 import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
+import kotlin.collections.HashMap
 
 class DatabaseHelper(private val context: Context) :
         SQLiteOpenHelper(context, context.filesDir.path + "/org.mcxa.vortaro/databases", null, 1) {
@@ -62,74 +64,81 @@ class DatabaseHelper(private val context: Context) :
      * @param w word adapter to push the results into
      */
     fun search(s: String, w: WordAdapter) {
-        w.words.beginBatchedUpdates();
-
-        // remove items at end, to avoid unnecessary array shifting
-        while (w.words.size() > 0) {
-            w.words.removeItemAt(w.words.size() - 1);
-        }
-
         // iterate through dictionary and search for matches
         val normalizedTerm = s.xReplace().normalizeES()
         val exactTerm = s
         Log.d(TAG, "begining search for " + s)
-        val wordmap = HashMap<Int, WordModel>()
-        db.rawQuery("SELECT * FROM es " +
-                "INNER JOIN en ON es.rowid=en.esrow " +
-                "LEFT JOIN trans ON es.esword=trans.verb " +
-                "LEFT JOIN ety ON es.esword=ety.word " +
-                "WHERE es.esword=? OR es.esword=? OR es.rowid IN " +
-                "(SELECT es.rowid FROM es INNER JOIN en ON es.rowid=en.esrow WHERE en.enword=? OR en.enword=?)",
-                arrayOf(exactTerm, normalizedTerm, exactTerm, "to " + exactTerm)
-        ).use { cursor ->
 
-            while (cursor.moveToNext()) {
-                val esrow = cursor.getInt(cursor.getColumnIndexOrThrow("esrow"))
-                // if the wordmap already has the Esperanto word, then just add the english def
-                if (wordmap.containsKey(esrow)) {
-                    // grab the english values
-                    val word = cursor.getString(cursor.getColumnIndexOrThrow("enword"))
-                    val elaboration = cursor.getString(cursor.getColumnIndexOrThrow("el"))
-                    val elbefore = cursor.getInt(cursor.getColumnIndexOrThrow("elbefore"))
+        object: AsyncTask<Void,Void,HashMap<Int, WordModel>>() {
+            override fun doInBackground(vararg p0: Void?): HashMap<Int, WordModel> {
+                val wordmap = HashMap<Int, WordModel>()
+                db.rawQuery("SELECT * FROM es " +
+                        "INNER JOIN en ON es.rowid=en.esrow " +
+                        "LEFT JOIN trans ON es.esword=trans.verb " +
+                        "LEFT JOIN ety ON es.esword=ety.word " +
+                        "WHERE es.esword=? OR es.esword=? OR es.rowid IN " +
+                        "(SELECT es.rowid FROM es INNER JOIN en ON es.rowid=en.esrow WHERE en.enword=? OR en.enword=?)",
+                        arrayOf(exactTerm, normalizedTerm, exactTerm, "to " + exactTerm)
+                ).use { cursor ->
 
-                    wordmap.get(esrow)?.en?.add(EnModel(word, elaboration, when(elbefore) {
-                        0 -> false
-                        1 -> true
-                        else -> null
-                    }))
-                // add a new word model and english definition
-                } else {
-                    val esword = cursor.getString(cursor.getColumnIndexOrThrow("esword"))
-                    val enword = cursor.getString(cursor.getColumnIndexOrThrow("enword"))
-                    val elaboration = cursor.getString(cursor.getColumnIndexOrThrow("el"))
-                    val elbefore = cursor.getInt(cursor.getColumnIndexOrThrow("elbefore"))
-                    val etymology = cursor.getString(cursor.getColumnIndexOrThrow("ety"))
-                    val trans = cursor.getInt(cursor.getColumnIndexOrThrow("trans"))
-                    Log.d(TAG, "found $esword, $enword, $elaboration, $elbefore, $etymology, $trans")
+                    while (cursor.moveToNext()) {
+                        val esrow = cursor.getInt(cursor.getColumnIndexOrThrow("esrow"))
+                        // if the wordmap already has the Esperanto word, then just add the english def
+                        if (wordmap.containsKey(esrow)) {
+                            // grab the english values
+                            val word = cursor.getString(cursor.getColumnIndexOrThrow("enword"))
+                            val elaboration = cursor.getString(cursor.getColumnIndexOrThrow("el"))
+                            val elbefore = cursor.getInt(cursor.getColumnIndexOrThrow("elbefore"))
 
-                    val enmodels = LinkedList<EnModel>()
-                    enmodels.add(EnModel(enword, elaboration, when(elbefore) {
-                        2 -> true
-                        1 -> false
-                        else -> null
-                    }))
+                            wordmap.get(esrow)?.en?.add(EnModel(word, elaboration, when(elbefore) {
+                                0 -> false
+                                1 -> true
+                                else -> null
+                            }))
+                            // add a new word model and english definition
+                        } else {
+                            val esword = cursor.getString(cursor.getColumnIndexOrThrow("esword"))
+                            val enword = cursor.getString(cursor.getColumnIndexOrThrow("enword"))
+                            val elaboration = cursor.getString(cursor.getColumnIndexOrThrow("el"))
+                            val elbefore = cursor.getInt(cursor.getColumnIndexOrThrow("elbefore"))
+                            val etymology = cursor.getString(cursor.getColumnIndexOrThrow("ety"))
+                            val trans = cursor.getInt(cursor.getColumnIndexOrThrow("trans"))
+                            Log.d(TAG, "found $esword, $enword, $elaboration, $elbefore, $etymology, $trans")
 
-                    wordmap.put(esrow, WordModel(esword, enmodels, etymology ?: "",when(trans) {
-                        2 -> true
-                        1 -> false
-                        else -> null
-                    }))
+                            val enmodels = LinkedList<EnModel>()
+                            enmodels.add(EnModel(enword, elaboration, when(elbefore) {
+                                2 -> true
+                                1 -> false
+                                else -> null
+                            }))
+
+                            wordmap.put(esrow, WordModel(esword, enmodels, etymology ?: "",when(trans) {
+                                2 -> true
+                                1 -> false
+                                else -> null
+                            }))
+                        }
+                    }
                 }
+                return wordmap
             }
-        }
 
-        wordmap.values.forEach { wordModel ->
-            w.words.add(wordModel)
-        }
+            override fun onPostExecute(wordmap: HashMap<Int, WordModel>) {
+                w.words.beginBatchedUpdates();
 
-        Log.d(TAG, "search complete")
+                // remove items at end, to avoid unnecessary array shifting
+                while (w.words.size() > 0) {
+                    w.words.removeItemAt(w.words.size() - 1);
+                }
 
-        w.words.endBatchedUpdates();
+                wordmap.values.forEach { wordModel ->
+                    w.words.add(wordModel)
+                }
+
+                w.words.endBatchedUpdates();
+                Log.d(TAG, "search complete")
+            }
+        }.execute()
     }
 }
 
