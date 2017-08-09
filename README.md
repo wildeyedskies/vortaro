@@ -3,6 +3,9 @@
 Senreta Vortaro (Offline Dictionary) is an english-esperanto dictionary app inspired by the
 web page [Tuja Vortaro](https://tujavortaro.net). It is designed to be easy to use for beginners.
 
+<a href="https://f-droid.org/packages/org.mcxa.vortaro/" target="_blank">
+<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="90"/></a>
+
 ## Data Sources
 
 The app gets its dictionary data from the following sources. More information is available in the dictionary-src directory.
