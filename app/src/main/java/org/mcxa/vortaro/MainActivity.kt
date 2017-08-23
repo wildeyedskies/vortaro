@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val w = word_view.adapter as WordAdapter
                 if (!s.isNullOrEmpty()) {
-                    dbHelper?.search(s.toString(), w)
+                    dbHelper?.search(s.toString().toLowerCase(), w)
                 } else {
                     w.words.beginBatchedUpdates();
                     // remove items at end, to avoid unnecessary array shifting

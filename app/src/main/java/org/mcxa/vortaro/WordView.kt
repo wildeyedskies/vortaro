@@ -34,7 +34,9 @@ data class WordModel(val es : String, val en : LinkedList<EnModel>, val ety : St
 data class EnModel(val word: String, val elaboration: String?, val elbefore: Boolean?) {
     override fun toString(): String {
         // handle the special case where we only have an elaboration
-        if (word.isEmpty() && elaboration != null) return "($elaboration)"
+        // due to me being lazy in my parse-DB code the elaboration already has () in the case where
+        // we just have an elaboration and no definitions
+        if (word.isEmpty() && elaboration != null) return elaboration
         if (elaboration.isNullOrEmpty()) return word
 
         when(elbefore) {
