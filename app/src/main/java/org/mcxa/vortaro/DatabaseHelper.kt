@@ -67,7 +67,7 @@ class DatabaseHelper(private val context: Context) :
         // iterate through dictionary and search for matches
         val normalizedTerm = s.xReplace().normalizeES()
         val exactTerm = s
-        Log.d(TAG, "begining search for " + s)
+        Log.d(TAG, "begining search for $s")
 
         object: AsyncTask<Void,Void,HashMap<Int, WordModel>>() {
             override fun doInBackground(vararg p0: Void?): HashMap<Int, WordModel> {

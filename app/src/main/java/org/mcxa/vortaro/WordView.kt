@@ -39,16 +39,15 @@ data class EnModel(val word: String, val elaboration: String?, val elbefore: Boo
         if (word.isEmpty() && elaboration != null) return elaboration
         if (elaboration.isNullOrEmpty()) return word
 
-        when(elbefore) {
-            null -> return word
-            true -> return "($elaboration) $word"
-            false -> return "$word ($elaboration)"
+        return when(elbefore) {
+            null -> word
+            true -> "($elaboration) $word"
+            false -> "$word ($elaboration)"
         }
     }
 }
 
-class WordAdapter(val context: Context) :
-        RecyclerView.Adapter<WordAdapter.ViewHolder>() {
+class WordAdapter: RecyclerView.Adapter<WordAdapter.ViewHolder>() {
 
     val words = SortedList<WordModel>(WordModel::class.java, object: SortedList.Callback<WordModel>() {
         override fun areContentsTheSame(oldItem: WordModel?, newItem: WordModel?): Boolean {
@@ -85,17 +84,17 @@ class WordAdapter(val context: Context) :
         val etymology = itemView.item_etymology
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup?, viewType: Int): ViewHolder {
-        val inflater = LayoutInflater.from(parent?.context)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
         val wordView = inflater.inflate(R.layout.word_item, parent, false)
         return ViewHolder(wordView)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder?, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val word = words.get(position)
 
-        holder?.word?.setText(word.displayDef())
-        holder?.etymology?.setText(word.ety)
+        holder.word?.text = word.displayDef()
+        holder.etymology?.text = word.ety
     }
 
     override fun getItemCount(): Int {
