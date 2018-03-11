@@ -6,10 +6,8 @@ import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -25,11 +23,10 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        val wordAdapter = WordAdapter(this)
         dbHelper = DatabaseHelper(this)
 
         word_view.apply{
-            adapter = wordAdapter
+            adapter = WordAdapter()
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
 
@@ -41,10 +38,10 @@ class MainActivity : AppCompatActivity() {
                 if (!s.isNullOrEmpty()) {
                     dbHelper?.search(s.toString().toLowerCase(), w)
                 } else {
-                    w.words.beginBatchedUpdates();
+                    w.words.beginBatchedUpdates()
                     // remove items at end, to avoid unnecessary array shifting
                     while (w.words.size() > 0) {
-                        w.words.removeItemAt(w.words.size() - 1);
+                        w.words.removeItemAt(w.words.size() - 1)
                     }
                     w.words.endBatchedUpdates()
                 }
