@@ -1,6 +1,7 @@
 package org.mcxa.vortaro
 
 import android.content.Intent
+import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
@@ -49,6 +50,13 @@ class MainActivity : AppCompatActivity() {
 
             override fun afterTextChanged(s: Editable?) {}
         })
+
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -72,4 +80,18 @@ class MainActivity : AppCompatActivity() {
         dbHelper?.close()
         super.onDestroy()
     }
+
+    private fun handleIntent(intent: Intent) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (intent.action == Intent.ACTION_PROCESS_TEXT) {
+                val text = intent.getCharSequenceExtra(android.content.Intent.EXTRA_PROCESS_TEXT)
+                if (!text.isNullOrEmpty()) {
+                    val w = word_view.adapter as WordAdapter
+                    dbHelper?.search(text.toString().toLowerCase(), w)
+                }
+            }
+        }
+    }
+
 }
