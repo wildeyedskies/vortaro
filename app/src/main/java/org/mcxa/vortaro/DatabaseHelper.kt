@@ -23,7 +23,6 @@ class DatabaseHelper(private val context: Context) :
         SQLiteOpenHelper(context, context.filesDir.path + "/org.mcxa.vortaro/databases", null, 1) {
     //The Android's default system path of your application database.
     private val dbPath = context.filesDir.path + "/org.mcxa.vortaro/databases"
-
     // logging tag
     private val TAG = "DatabaseHelper"
 
@@ -87,6 +86,7 @@ class DatabaseHelper(private val context: Context) :
     /**
      * Search for a word. Note that checking if the string is null or empty should be done by the
      * calling function
+<<<<<<< HEAD
      * @param exactTerm search query
      * @param w word adapter to push the results into
      */
@@ -170,17 +170,17 @@ class DatabaseHelper(private val context: Context) :
 fun String.xReplace(): String {
     var mutWord = this
 
-    // I like Kotlin a lot more than java, but what is with this array syntax??
     val pairs = arrayOf(
-            arrayOf("cx", "ĉ"), arrayOf("cX", "ĉ"), arrayOf("Cx", "Ĉ"), arrayOf("CX", "Ĉ"),
-            arrayOf("gx", "ĝ"), arrayOf("gx", "ĝ"), arrayOf("Gx", "Ĝ"), arrayOf("Gx", "Ĝ"),
-            arrayOf("hx", "ĥ"), arrayOf("hx", "ĥ"), arrayOf("Hx", "Ĥ"), arrayOf("Hx", "Ĥ"),
-            arrayOf("jx", "ĵ"), arrayOf("jx", "ĵ"), arrayOf("Jx", "Ĵ"), arrayOf("Jx", "Ĵ"),
-            arrayOf("sx", "ŝ"), arrayOf("sx", "ŝ"), arrayOf("Sx", "Ŝ"), arrayOf("Sx", "Ŝ"),
-            arrayOf("ux", "ŭ"), arrayOf("ux", "ŭ"), arrayOf("Ux", "Ŭ"), arrayOf("Ux", "Ŭ")
+            "cx" to "ĉ", "cX" to "ĉ", "Cx" to "Ĉ", "CX" to "Ĉ",
+            "gx" to "ĝ", "gx" to "ĝ", "Gx" to "Ĝ", "Gx" to "Ĝ",
+            "hx" to "ĥ", "hx" to "ĥ", "Hx" to "Ĥ", "Hx" to "Ĥ",
+            "jx" to "ĵ", "jx" to "ĵ", "Jx" to "Ĵ", "Jx" to "Ĵ",
+            "sx" to "ŝ", "sx" to "ŝ", "Sx" to "Ŝ", "Sx" to "Ŝ",
+            "ux" to "ŭ", "ux" to "ŭ", "Ux" to "Ŭ", "Ux" to "Ŭ"
     )
-    for (replacement in pairs) {
-        mutWord = mutWord.replace(replacement[0], replacement[1])
+
+    for ((target, replacement) in pairs) {
+        mutWord = mutWord.replace(target, replacement)
     }
 
     Log.d("xReplace", "replaced " + this + " with " + mutWord)
@@ -191,31 +191,31 @@ fun String.xReplace(): String {
 fun String.normalizeES(): String {
     val suffixes = arrayOf(
             // nomalize all verb endings to infinitive
-            arrayOf("as", "i"),
-            arrayOf("os", "i"),
-            arrayOf("is", "i"),
-            arrayOf("us", "i"),
-            arrayOf("u", "i"),
+            "as" to "i",
+            "os" to "i",
+            "is" to "i",
+            "us" to "i",
+            "u" to "i",
 
             // nomalize all noun endings to o
-            arrayOf("oj", "o"),
-            arrayOf("ojn", "o"),
-            arrayOf("on", "o"),
+            "oj" to "o",
+            "ojn" to "o",
+            "on" to "o",
 
             // nomalize all adjective endings to o
-            arrayOf("aj", "a"),
-            arrayOf("ajn", "a"),
-            arrayOf("an", "a"),
+            "aj" to "a",
+            "ajn" to "a",
+            "an" to "a",
 
             // normalize adverbs
-            arrayOf("en", "e")
+            "en" to "e"
     )
 
-    for (replacement in suffixes) {
-        if (this.endsWith(replacement[0])) {
+    for ((target, replacement) in suffixes) {
+        if (this.endsWith(target)) {
             //replace the ending
-            val toRet = this.substring(0, this.length - replacement[0].length) + replacement[1]
-            Log.d("normalizeES", "replaced " + this + " with " + toRet)
+            val toRet = this.substring(0, this.length - target.length) + replacement
+            Log.d("normalizeES", "replaced $this with $toRet")
             return toRet
         }
     }
