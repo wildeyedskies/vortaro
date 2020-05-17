@@ -47,6 +47,9 @@ def build_espdic(conn):
     print('parsing espdic...')
     # now let's parse the file into the database
     for line in espdic_in:
+        if ':' not in line:
+            continue
+
         eo, en = line.strip().split(' : ')
 
         # insert the Esperanto word
