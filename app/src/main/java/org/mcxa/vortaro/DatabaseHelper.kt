@@ -3,7 +3,6 @@ package org.mcxa.vortaro
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.os.AsyncTask
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope

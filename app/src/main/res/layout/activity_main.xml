@@ -32,7 +32,7 @@
             android:layout_marginEnd="20dp"
             android:layout_marginStart="25dp"
             android:background="@android:color/transparent"
-            android:maxLines="1"/>
+            android:inputType="text"/>
     </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 

@@ -56,8 +56,8 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when (item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             R.id.about -> {
                 val i = Intent(this, AboutActivity::class.java)
                 startActivity(i) // brings up the second activity
