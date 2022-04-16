@@ -28,11 +28,12 @@
             android:id="@+id/search_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:layout_marginEnd="20dp"
             android:layout_marginStart="25dp"
+            android:layout_marginEnd="20dp"
             android:background="@android:color/transparent"
-            android:inputType="text"/>
+            android:hint="Search Esperanto"
+            android:inputType="text"
+            android:textColor="@color/white" />
     </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
