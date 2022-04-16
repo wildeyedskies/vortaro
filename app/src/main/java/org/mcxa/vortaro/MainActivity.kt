@@ -29,7 +29,8 @@ class MainActivity : AppCompatActivity() {
             adapter = WordAdapter()
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
-
+        
+        search_text.requestFocus();
         search_text.addTextChangedListener(object: TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
