@@ -1,3 +1,7 @@
+## Moved
+
+This repository is now available at https://codeberg.org/boxedtoast/vortaro
+
 # Senreta Vortaro
 
 Senreta Vortaro (Offline Dictionary) is an english-esperanto dictionary app inspired by the
