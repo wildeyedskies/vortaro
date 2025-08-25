@@ -7,6 +7,7 @@ import shutil
 import sqlite3
 import re
 import sys
+import json
 
 def build_etymology(conn):
     print('opening etymology.txt')
@@ -84,6 +85,29 @@ def build_espdic(conn):
     c.close()
     print('done')
 
+def build_komputeko(conn):
+    print('opening komputeko_data.json')
+    komputeko_in = open('komputeko_data.json', 'r')
+
+    print('reading json...')
+    komputeko_json = json.load(komputeko_in)
+
+    c = conn.cursor()
+
+    for obj in komputeko_json["words"]:
+        if "eo" in obj:
+            eo = obj["eo"][0]["word"]
+            c.execute('''insert into eo values (?)''', (eo,))
+            eorow = c.lastrowid
+           
+            if "en" in obj:
+                for word in obj["en"]:
+                    enword = word["word"]
+                    c.execute('''insert into en values (?,?,?,?)''', (eorow, enword, '', ''))
+
+    c.close()
+    komputeko_in.close()
+    print('done')
 
 def build_transitive(conn):
    print('opening transitiveco.txt')
@@ -136,8 +160,11 @@ def main():
    create_tables(conn)
 
    build_espdic(conn)
+   build_komputeko(conn)
    build_etymology(conn)
    build_transitive(conn)
    move_files()
+
+   print("added", komputeko_counter, "komputeko words")
 
 main()
